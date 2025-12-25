@@ -1,5 +1,5 @@
 import api from './api';
-import { Order } from '../types';
+import type { Order } from '../types';
 
 export const paymentApi = {
   createPayment: async (

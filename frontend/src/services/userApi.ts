@@ -1,5 +1,5 @@
 import api from './api';
-import { User, ProcessedImage, StylePreset } from '../types';
+import type { User, ProcessedImage, StylePreset } from '../types';
 
 export const userApi = {
   getCurrentUser: async (): Promise<User> => {

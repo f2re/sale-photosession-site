@@ -1,5 +1,5 @@
 import api from './api';
-import { Package } from '../types';
+import type { Package } from '../types';
 
 export const packageApi = {
   getPackages: async (): Promise<Package[]> => {

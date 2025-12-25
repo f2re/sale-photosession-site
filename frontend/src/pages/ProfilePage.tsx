@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { userApi } from '../services/userApi';
 import { paymentApi } from '../services/paymentApi';
-import { ProcessedImage, Order } from '../types';
+import type { ProcessedImage, Order } from '../types';
 import './ProfilePage.css';
 
 const ProfilePage: React.FC = () => {
