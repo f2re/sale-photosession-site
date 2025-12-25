@@ -108,7 +108,16 @@ cd /opt/telegram-bots-platform/bots/photosession-site
 cp app/docker-compose.yml ./docker-compose.yml
 ```
 
-### 4. Restart Services
+### 4. Initialize Database
+
+Initialize database tables (first time only):
+
+```bash
+cd /opt/telegram-bots-platform/bots/photosession-site
+sudo docker-compose exec bot python init_db.py
+```
+
+### 5. Restart Services
 
 After updating `.env`:
 
@@ -120,7 +129,7 @@ sudo docker-compose up -d --build
 
 **If you get build errors**, see the [Troubleshooting Guide](./TROUBLESHOOTING.md#build-errors).
 
-### 5. Verify Installation
+### 6. Verify Installation
 
 Check service status:
 
