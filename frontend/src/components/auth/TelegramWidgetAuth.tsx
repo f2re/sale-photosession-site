@@ -7,7 +7,7 @@ interface Props {
 
 declare global {
   interface Window {
-    onTelegramAuth: (user: any) => void;
+    onTelegramAuth?: (user: any) => void;
   }
 }
 

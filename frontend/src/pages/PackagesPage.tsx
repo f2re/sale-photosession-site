@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { packageApi } from '../services/packageApi';
 import { paymentApi } from '../services/paymentApi';
-import { Package } from '../types';
+import type { Package } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import './PackagesPage.css';
 

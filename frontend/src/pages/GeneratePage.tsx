@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generationApi } from '../services/generationApi';
 import { useAuth } from '../hooks/useAuth';
-import { GenerationStatus } from '../types';
+import type { GenerationStatus } from '../types';
 import './GeneratePage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const GeneratePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -17,7 +15,6 @@ const GeneratePage: React.FC = () => {
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [status, setStatus] = useState<GenerationStatus | null>(null);
   const [resultImages, setResultImages] = useState<string[]>([]);
-  const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -38,7 +35,6 @@ const GeneratePage: React.FC = () => {
           }
         }
       };
-      setWs(websocket);
       return () => websocket.close();
     }
   }, [step, user]);

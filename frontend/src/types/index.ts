@@ -63,7 +63,9 @@ export interface GenerationStatus {
   image_id?: number;
 }
 
-export enum AuthMethod {
-  WIDGET = 'widget',
-  CODE = 'code'
-}
+export const AuthMethod = {
+  WIDGET: 'widget',
+  CODE: 'code',
+} as const;
+
+export type AuthMethodType = typeof AuthMethod[keyof typeof AuthMethod];

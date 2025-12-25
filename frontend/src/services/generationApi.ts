@@ -1,5 +1,5 @@
 import api from './api';
-import { ProcessedImage, StylePreset } from '../types';
+import type { ProcessedImage, StylePreset } from '../types';
 
 export const generationApi = {
   createGeneration: async (data: {

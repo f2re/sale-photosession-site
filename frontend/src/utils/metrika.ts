@@ -1,6 +1,7 @@
 declare global {
   interface Window {
     ym: any;
+    dataLayer: any[];
   }
 }
 
@@ -9,7 +10,7 @@ const COUNTER_ID = import.meta.env.VITE_YANDEX_METRIKA_COUNTER_ID;
 export const initMetrika = () => {
   if (!COUNTER_ID) return;
 
-  (function(m: any, e: any, t: any, r: any, i: any, k: any, a: any) {
+  (function(m: any, e: any, t: any, r: any, i: any) {
     m[i] = m[i] || function() {
       (m[i].a = m[i].a || []).push(arguments);
     };
@@ -19,8 +20,8 @@ export const initMetrika = () => {
         return;
       }
     }
-    k = e.createElement(t);
-    a = e.getElementsByTagName(t)[0];
+    const k = e.createElement(t);
+    const a = e.getElementsByTagName(t)[0];
     k.async = 1;
     k.src = r;
     a.parentNode.insertBefore(k, a);
@@ -47,10 +48,10 @@ export const trackPageView = (url: string) => {
 
 export const trackPurchase = (orderId: number, amount: number, packageName: string) => {
   if (typeof window.dataLayer === 'undefined') {
-    (window as any).dataLayer = [];
+    window.dataLayer = [];
   }
 
-  (window as any).dataLayer.push({
+  window.dataLayer.push({
     ecommerce: {
       purchase: {
         actionField: {
