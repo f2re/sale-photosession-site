@@ -10,11 +10,17 @@ class Settings(BaseSettings):
 
     # Database (shared with bot)
     DATABASE_URL: Optional[str] = None
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_NAME: str = "product_photoshoot_bot"
-    DB_USER: str = "product_user"
-    DB_PASSWORD: str = ""
+    # Support both standard and platform variable names
+    DB_HOST: Optional[str] = None
+    POSTGRES_HOST: Optional[str] = None
+    DB_PORT: Optional[int] = None
+    POSTGRES_PORT: Optional[int] = None
+    DB_NAME: Optional[str] = None
+    POSTGRES_DB: Optional[str] = None
+    DB_USER: Optional[str] = None
+    POSTGRES_USER: Optional[str] = None
+    DB_PASSWORD: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
 
     # OpenRouter API
     OPENROUTER_API_KEY: str
@@ -85,7 +91,15 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+        # Support both POSTGRES_* and DB_* variable naming
+        host = self.DB_HOST or self.POSTGRES_HOST or "localhost"
+        port = self.DB_PORT or self.POSTGRES_PORT or 5432
+        name = self.DB_NAME or self.POSTGRES_DB or "product_photoshoot_bot"
+        user = self.DB_USER or self.POSTGRES_USER or "product_user"
+        password = self.DB_PASSWORD or self.POSTGRES_PASSWORD or ""
+
+        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}"
 
     @property
     def admin_ids_list(self) -> List[int]:
