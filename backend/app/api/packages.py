@@ -11,4 +11,4 @@ router = APIRouter(prefix="/packages", tags=["packages"])
 async def get_packages(db: AsyncSession = Depends(get_db)):
     """Get all available packages"""
     packages = await get_all_packages(db)
-    return [PackageResponse.from_orm(pkg) for pkg in packages]
+    return [PackageResponse.model_validate(pkg) for pkg in packages]

@@ -15,7 +15,7 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
     """Get current user information"""
-    return UserResponse.from_orm(current_user)
+    return UserResponse.model_validate(current_user)
 
 @router.get("/me/images", response_model=List[GenerationResponse])
 async def get_my_images(
@@ -26,7 +26,7 @@ async def get_my_images(
 ):
     """Get current user's generated images"""
     images = await get_user_images(db, current_user.id, limit, offset)
-    return [GenerationResponse.from_orm(img) for img in images]
+    return [GenerationResponse.model_validate(img) for img in images]
 
 @router.get("/me/style-presets", response_model=List[StylePresetResponse])
 async def get_my_style_presets(
@@ -35,4 +35,4 @@ async def get_my_style_presets(
 ):
     """Get current user's saved style presets"""
     presets = await get_user_style_presets(db, current_user.id)
-    return [StylePresetResponse.from_orm(preset) for preset in presets]
+    return [StylePresetResponse.model_validate(preset) for preset in presets]

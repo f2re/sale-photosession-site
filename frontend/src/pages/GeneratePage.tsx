@@ -24,7 +24,10 @@ const GeneratePage: React.FC = () => {
 
   useEffect(() => {
     if (step === 'generating' && user) {
-      const websocket = new WebSocket(`ws://localhost:8000/api/generation/ws/${user.id}`);
+      // Get WebSocket URL from API URL (replace http with ws, https with wss)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const wsUrl = apiUrl.replace(/^http/, 'ws');
+      const websocket = new WebSocket(`${wsUrl}/api/generation/ws/${user.id}`);
       websocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.status) {

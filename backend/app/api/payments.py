@@ -165,4 +165,4 @@ async def get_my_orders(
         .order_by(Order.created_at.desc())
     )
     orders = result.scalars().all()
-    return [OrderResponse.from_orm(order) for order in orders]
+    return [OrderResponse.model_validate(order) for order in orders]
