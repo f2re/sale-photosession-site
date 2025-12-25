@@ -15,6 +15,7 @@ sudo ./add-bot.sh
 ```
 
 📖 **[See detailed platform installation guide →](./PLATFORM_INSTALLATION.md)**
+⚠️ **[Troubleshooting common issues →](./TROUBLESHOOTING.md)**
 
 The platform automatically handles:
 - ✅ PostgreSQL database creation and configuration
