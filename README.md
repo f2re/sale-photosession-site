@@ -2,6 +2,32 @@
 
 AI-powered photo generation website with Telegram authentication. Works with shared database from [sale-photosession-bot](https://github.com/f2re/sale-photosession-bot).
 
+## 🚀 Quick Deploy
+
+### Production Deployment with telegram-bots-platform
+
+**Recommended for production use!** Deploy this site with automatic SSL, database setup, and monitoring using [telegram-bots-platform](https://github.com/f2re/telegram-bots-platform).
+
+```bash
+cd /opt/telegram-bots-platform
+sudo ./add-bot.sh
+# Repository: https://github.com/f2re/sale-photosession-site
+```
+
+📖 **[See detailed platform installation guide →](./PLATFORM_INSTALLATION.md)**
+
+The platform automatically handles:
+- ✅ PostgreSQL database creation and configuration
+- ✅ Nginx reverse proxy with auto SSL (Let's Encrypt)
+- ✅ Docker container orchestration
+- ✅ Shared database between bot and site
+- ✅ Log management and monitoring
+- ✅ Port allocation and firewall configuration
+
+### Development Setup
+
+For local development without the platform, see [Manual Setup](#manual-setup) below.
+
 ## Features
 
 - **2 Telegram Auth Methods**:
@@ -29,7 +55,9 @@ AI-powered photo generation website with Telegram authentication. Works with sha
 - Vite
 - React Router
 
-## Setup
+## Manual Setup
+
+For local development or custom deployment (without telegram-bots-platform).
 
 ### 1. Clone Repository
 
@@ -58,11 +86,15 @@ npm install
 npm run dev
 ```
 
-### 4. Docker Setup (Recommended)
+### 4. Docker Setup (Development)
+
+For local development:
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.dev.yml up -d
 ```
+
+**Note**: The main `docker-compose.yml` is configured for production use with telegram-bots-platform. Use `docker-compose.dev.yml` for local development with included PostgreSQL.
 
 ## Environment Variables
 
