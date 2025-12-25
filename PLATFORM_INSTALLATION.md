@@ -117,9 +117,28 @@ cd /opt/telegram-bots-platform/bots/photosession-site
 sudo docker-compose exec bot python init_db.py
 ```
 
-### 5. Restart Services
+### 5. Setup Nginx (Critical!)
 
-After updating `.env`:
+Configure nginx to route traffic properly:
+
+```bash
+cd /opt/telegram-bots-platform/bots/photosession-site/app
+sudo bash setup-nginx.sh
+# Enter your domain when prompted
+```
+
+This will:
+- Create nginx configuration for your domain
+- Route `/` to frontend (React app)
+- Route `/api` to backend (FastAPI)
+- Setup WebSocket proxying
+- Enable the site and reload nginx
+
+**Manual alternative**: See [NGINX_CONFIG.md](./NGINX_CONFIG.md) for manual setup.
+
+### 6. Restart Services
+
+After updating `.env` and nginx:
 
 ```bash
 cd /opt/telegram-bots-platform/bots/photosession-site
@@ -129,7 +148,7 @@ sudo docker-compose up -d --build
 
 **If you get build errors**, see the [Troubleshooting Guide](./TROUBLESHOOTING.md#build-errors).
 
-### 6. Verify Installation
+### 7. Verify Installation
 
 Check service status:
 
