@@ -170,6 +170,26 @@ sudo docker-compose exec bot alembic upgrade head
 
 ## Application Errors
 
+### Error: "ModuleNotFoundError: No module named 'psycopg2'"
+
+**Cause**: Missing psycopg2 package (required by SQLAlchemy/Alembic even with asyncpg).
+
+**Solution**: Ensure requirements.txt includes psycopg2-binary:
+
+```bash
+cd /opt/telegram-bots-platform/bots/sale-photosession-site/app
+grep psycopg2 backend/requirements.txt
+# Should show: psycopg2-binary==2.9.9
+
+# If missing, rebuild:
+cd ..
+sudo docker-compose down
+sudo docker-compose build --no-cache bot
+sudo docker-compose up -d
+```
+
+**Note**: Even though we use asyncpg for async operations, SQLAlchemy and Alembic require psycopg2 for sync operations and migrations.
+
 ### Error: "uvicorn: command not found" or "serve: command not found"
 
 **Cause**: Dependencies not installed in Docker image.
