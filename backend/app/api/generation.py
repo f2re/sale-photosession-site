@@ -71,7 +71,7 @@ async def create_generation(
         )
     )
 
-    return GenerationResponse.from_orm(processed_image)
+    return GenerationResponse.model_validate(processed_image)
 
 @router.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
@@ -111,7 +111,7 @@ async def create_user_style_preset(
         style_data=preset_data.style_data
     )
 
-    return StylePresetResponse.from_orm(preset)
+    return StylePresetResponse.model_validate(preset)
 
 @router.delete("/style-presets/{preset_id}")
 async def delete_user_style_preset(

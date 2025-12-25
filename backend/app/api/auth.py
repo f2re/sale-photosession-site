@@ -54,7 +54,7 @@ async def login_with_telegram_widget(
 
     return AuthResponse(
         access_token=access_token,
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 @router.post("/request-code")
@@ -129,7 +129,7 @@ async def verify_telegram_code(
 
     return AuthResponse(
         access_token=access_token,
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 @router.get("/bot-info")

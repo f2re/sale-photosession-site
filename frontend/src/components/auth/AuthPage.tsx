@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../store/slices/authSlice';
-import { AuthMethod } from '../../types';
+import { AuthMethod, type AuthMethodType } from '../../types';
 import TelegramWidgetAuth from './TelegramWidgetAuth';
 import TelegramCodeAuth from './TelegramCodeAuth';
 import './AuthPage.css';
 
 const AuthPage: React.FC = () => {
-  const [authMethod, setAuthMethod] = useState<AuthMethod | null>(null);
+  const [authMethod, setAuthMethod] = useState<AuthMethodType | null>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
