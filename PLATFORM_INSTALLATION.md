@@ -2,6 +2,8 @@
 
 This guide explains how to deploy the PhotoSession AI Website using the [telegram-bots-platform](https://github.com/f2re/telegram-bots-platform).
 
+> **💡 Having issues?** Check the [Troubleshooting Guide](./TROUBLESHOOTING.md) for common problems and solutions.
+
 ## Prerequisites
 
 1. **telegram-bots-platform** installed and configured on Debian 12 server
@@ -97,7 +99,16 @@ YANDEX_METRIKA_COUNTER_ID=
 YANDEX_METRIKA_TOKEN=
 ```
 
-### 3. Restart Services
+### 3. Fix docker-compose.yml (Important!)
+
+The platform may auto-generate a docker-compose.yml with incorrect paths. Copy our version:
+
+```bash
+cd /opt/telegram-bots-platform/bots/photosession-site
+cp app/docker-compose.yml ./docker-compose.yml
+```
+
+### 4. Restart Services
 
 After updating `.env`:
 
@@ -107,7 +118,9 @@ sudo docker-compose down
 sudo docker-compose up -d --build
 ```
 
-### 4. Verify Installation
+**If you get build errors**, see the [Troubleshooting Guide](./TROUBLESHOOTING.md#build-errors).
+
+### 5. Verify Installation
 
 Check service status:
 
