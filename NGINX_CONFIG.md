@@ -22,17 +22,18 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+## Current Architecture
+
+**Important**: This site uses a **single-container architecture**. Frontend static files are built during Docker build and served directly by nginx from a mounted volume. No separate frontend service is needed.
+
 ## Configuration
 
 ```nginx
 # Nginx configuration for sale-photosession-site
+# Single container architecture - nginx serves static files directly
 
 upstream backend {
     server 127.0.0.1:4196;  # Backend port (INTERNAL ONLY - not exposed to internet)
-}
-
-upstream frontend {
-    server 127.0.0.1:3000;  # Frontend port (INTERNAL ONLY - not exposed to internet)
 }
 
 server {
@@ -47,6 +48,10 @@ server {
     # listen 443 ssl http2;  # Uncomment after SSL setup
     listen 80;  # Remove this after SSL is configured
     server_name yourdomain.com;
+
+    # Root directory for static files (mounted from Docker container)
+    root /opt/telegram-bots-platform/bots/photosession-site/static;
+    index index.html;
 
     # SSL Configuration (uncomment after certbot setup)
     # ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
@@ -63,17 +68,25 @@ server {
     # Max upload size for image generation
     client_max_body_size 10M;
 
-    # Frontend - serve React app
+    # Gzip compression for static files
+    gzip on;
+    gzip_vary on;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss;
+
+    # Frontend - serve static files with proper caching
     location / {
-        proxy_pass http://frontend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
+        try_files $uri $uri/ /index.html;
+
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # Don't cache index.html
+        location = /index.html {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+        }
     }
 
     # Backend API endpoints
@@ -143,32 +156,34 @@ server {
 }
 ```
 
+**Note**: The setup-nginx.sh script automatically generates this configuration with the correct paths and domain.
+
 ## Port Security
 
-**IMPORTANT**: Backend and frontend ports should ONLY be accessible locally:
+**IMPORTANT**: Backend port is ONLY accessible locally:
 
 ### In docker-compose.yml
 
-The current configuration exposes ports to the host:
-```yaml
-ports:
-  - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
-  - "${FRONTEND_PORT:-3000}:3000"
-```
-
-For production with nginx, you should bind to localhost only:
+The configuration binds backend to localhost only:
 ```yaml
 ports:
   - "127.0.0.1:${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
-  - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+```
+
+**No frontend port** - static files are served directly by nginx from mounted volume:
+```yaml
+volumes:
+  - ./static:/app/static:ro
 ```
 
 This ensures:
-- ✅ Only nginx can access backend/frontend
-- ✅ Direct internet access to ports is blocked
+- ✅ Only nginx can access backend
+- ✅ No frontend service needed (files served directly)
+- ✅ Direct internet access to backend is blocked
 - ✅ All traffic goes through nginx (port 80/443)
 - ✅ SSL termination happens at nginx
 - ✅ Security headers applied by nginx
+- ✅ Reduced resource usage (no extra container/port)
 
 ### Firewall Rules
 
@@ -233,43 +248,78 @@ ws.onopen = () => console.log('Connected');
 
 **Issue**: Accessing the site shows JSON instead of the React app.
 
-**Cause**: Nginx is routing all traffic to backend, or frontend isn't running.
+**Cause**: Nginx configuration not set up properly, or static files not mounted.
 
 **Solution**:
 ```bash
-# Check if frontend is running
-sudo docker ps | grep frontend
-
-# Check frontend logs
-sudo docker logs sale-photosession-site_frontend
+# Check if static files exist
+ls -la /opt/telegram-bots-platform/bots/photosession-site/static/
 
 # Verify nginx routing
 sudo nginx -t
 sudo tail -f /var/log/nginx/sale-photosession-site-error.log
+
+# Rebuild container to regenerate static files
+cd /opt/telegram-bots-platform/bots/photosession-site
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
+
+# Re-run nginx setup
+cd app
+sudo bash setup-nginx.sh
 ```
 
-### Cannot access ports from internet
+### Cannot access backend port from internet
 
 **Good!** This is the correct security configuration. Only nginx (port 80/443) should be accessible from internet.
 
 **To test locally**:
 ```bash
 # From server
-curl http://localhost:3000  # Frontend
-curl http://localhost:4196  # Backend
+curl http://localhost:4196/api  # Backend API (should work)
 
-# From internet (should work)
-curl http://yourdomain.com  # Through nginx
+# Test static files directly
+ls -la /opt/telegram-bots-platform/bots/photosession-site/static/
+
+# From internet (should work through nginx)
+curl http://yourdomain.com  # Frontend HTML
+curl http://yourdomain.com/api  # Backend API through nginx
 ```
 
 ### "502 Bad Gateway"
 
-**Cause**: Backend or frontend containers not running.
+**Cause**: Backend container not running, or nginx can't reach backend.
 
 **Solution**:
 ```bash
+# Check container status
 sudo docker-compose ps
+
+# Start if not running
 sudo docker-compose up -d
+
+# Verify backend is listening
+curl http://localhost:${BACKEND_PORT:-8000}/api
+
+# Check nginx error log
+sudo tail -f /var/log/nginx/sale-photosession-site-error.log
+```
+
+### "404 Not Found" for static files
+
+**Cause**: Static files not properly mounted or not built.
+
+**Solution**:
+```bash
+# Check if static files exist
+ls -la /opt/telegram-bots-platform/bots/photosession-site/static/
+
+# Rebuild container (builds frontend automatically)
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
+
+# Verify volume mount
+sudo docker inspect photosession-site_bot | grep -A 5 "Mounts"
 ```
 
 ## Directory Structure

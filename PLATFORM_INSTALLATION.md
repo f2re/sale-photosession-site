@@ -16,10 +16,13 @@ This guide explains how to deploy the PhotoSession AI Website using the [telegra
 
 When deployed with the platform:
 
-- **Backend API** runs on auto-assigned port (default: 8000)
-- **Frontend** serves static files on auto-assigned port (default: 3000)
+- **Single Docker container** with multi-stage build:
+  - Stage 1: Node.js builds frontend static files
+  - Stage 2: Python backend + static files copied from stage 1
+- **Backend API** runs on auto-assigned port (default: 8000, localhost only)
+- **Frontend static files** mounted as volume and served directly by nginx
 - **Database** is automatically created and configured by the platform
-- **Nginx** reverse proxy is managed by the platform with auto SSL
+- **Nginx** reverse proxy serves static files and proxies API requests
 - **Network** uses shared `bots_shared_network` for service isolation
 
 ## Installation Steps
@@ -38,7 +41,6 @@ You will be prompted for:
 - **Telegram bot token**: Your bot token from BotFather
 - **Domain**: Your domain (e.g., `photos.yourdomain.com`)
 - **Backend port**: Press Enter for auto-assignment or specify (e.g., `8000`)
-- **Frontend port**: Press Enter for auto-assignment or specify (e.g., `3000`)
 
 The platform will:
 - ✅ Clone the repository
@@ -117,9 +119,24 @@ cd /opt/telegram-bots-platform/bots/photosession-site
 sudo docker-compose exec bot python init_db.py
 ```
 
-### 5. Setup Nginx (Critical!)
+### 5. Build Container (Builds Frontend Automatically)
 
-Configure nginx to route traffic properly:
+The multi-stage Dockerfile builds the frontend automatically:
+
+```bash
+cd /opt/telegram-bots-platform/bots/photosession-site
+sudo docker-compose build --no-cache
+```
+
+This will:
+- Build React frontend using Node.js 22
+- Copy static files to backend container
+- Install Python dependencies
+- Create single optimized container
+
+### 6. Setup Nginx (Critical!)
+
+Configure nginx to serve static files and proxy API:
 
 ```bash
 cd /opt/telegram-bots-platform/bots/photosession-site/app
@@ -129,26 +146,26 @@ sudo bash setup-nginx.sh
 
 This will:
 - Create nginx configuration for your domain
-- Route `/` to frontend (React app)
+- Serve static files directly from `/static/` directory
 - Route `/api` to backend (FastAPI)
 - Setup WebSocket proxying
+- Enable proper caching for assets
 - Enable the site and reload nginx
 
 **Manual alternative**: See [NGINX_CONFIG.md](./NGINX_CONFIG.md) for manual setup.
 
-### 6. Restart Services
+### 7. Start Services
 
 After updating `.env` and nginx:
 
 ```bash
 cd /opt/telegram-bots-platform/bots/photosession-site
-sudo docker-compose down
-sudo docker-compose up -d --build
+sudo docker-compose up -d
 ```
 
 **If you get build errors**, see the [Troubleshooting Guide](./TROUBLESHOOTING.md#build-errors).
 
-### 7. Verify Installation
+### 8. Verify Installation
 
 Check service status:
 
@@ -156,16 +173,20 @@ Check service status:
 # View running containers
 sudo docker ps | grep photosession
 
-# Check backend logs
-sudo docker logs -f photosession-site_bot_1
+# Check container logs (backend + build output)
+sudo docker logs -f photosession-site_bot
 
-# Check frontend logs
-sudo docker logs -f photosession-site_frontend_1
+# Check static files were mounted
+ls -la /opt/telegram-bots-platform/bots/photosession-site/static/
 
 # Check Nginx configuration
 sudo nginx -t
 
+# Test frontend (should return HTML)
+curl https://photos.yourdomain.com
+
 # Test API endpoint
+curl https://photos.yourdomain.com/api
 curl https://photos.yourdomain.com/docs
 ```
 
@@ -213,17 +234,14 @@ sudo docker-compose up -d --build
 View logs:
 
 ```bash
-# Backend logs
-sudo docker logs -f photosession-site_bot_1
-
-# Frontend logs
-sudo docker logs -f photosession-site_frontend_1
+# Container logs (includes frontend build + backend runtime)
+sudo docker logs -f photosession-site_bot
 
 # Nginx access logs
-sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/sale-photosession-site-access.log
 
 # Nginx error logs
-sudo tail -f /var/log/nginx/error.log
+sudo tail -f /var/log/nginx/sale-photosession-site-error.log
 ```
 
 ## Troubleshooting
@@ -244,11 +262,10 @@ sudo -u postgres psql -d photosession_site_db -c "\dt"
 
 ### Port Conflicts
 
-If ports are already in use, modify `.env`:
+If backend port is already in use, modify `.env`:
 
 ```env
 BACKEND_PORT=8001
-FRONTEND_PORT=3001
 ```
 
 Then restart:
@@ -269,16 +286,16 @@ sudo systemctl reload nginx
 
 ### Frontend Build Errors
 
-If frontend build fails, check Node.js version:
+If frontend build fails, check build logs:
 
 ```bash
-sudo docker-compose logs frontend
+sudo docker-compose logs bot | grep -A 20 "npm run build"
 ```
 
-Rebuild with more memory:
+Rebuild container with no cache:
 
 ```bash
-sudo docker-compose build --no-cache frontend
+sudo docker-compose build --no-cache bot
 ```
 
 ## Platform Commands

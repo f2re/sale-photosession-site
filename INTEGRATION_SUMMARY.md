@@ -83,13 +83,15 @@ This document summarizes all changes made to integrate sale-photosession-site wi
 ### Docker Configuration
 
 #### docker-compose.yml (Production)
+- **Single container architecture**: One `bot` service contains everything
 - Removed embedded PostgreSQL (platform provides it)
 - Removed nginx service (platform handles reverse proxy)
-- Renamed `backend` service to `bot` (platform convention)
+- Removed separate frontend service (built during Docker build)
 - Added external `bots_shared_network`
 - Added log rotation configuration
 - Dynamic port configuration via env vars
-- Build contexts updated for platform structure
+- Build context: `./app` (to access both backend/ and frontend/)
+- Volume mount: `./static:/app/static:ro` for nginx to serve
 
 #### docker-compose.dev.yml (Development)
 - New file for local development
@@ -100,10 +102,18 @@ This document summarizes all changes made to integrate sale-photosession-site wi
 
 ### Backend Updates
 
-#### Dockerfile
-- Dynamic port support (`BACKEND_PORT` or `PORT`)
-- Created `/app/logs` and `/app/data` directories
-- Removed hardcoded port 8000
+#### Dockerfile (Multi-Stage Build)
+- **Stage 1 (frontend-builder)**: Node.js 22 builds React app
+  - Install dependencies with `npm ci`
+  - Build with `npm run build`
+  - Output: `/frontend/dist`
+- **Stage 2 (runtime)**: Python 3.11 + static files
+  - Install Python dependencies
+  - Copy backend code
+  - Copy built frontend from stage 1 to `/app/static`
+  - Dynamic port support (`BACKEND_PORT` or `PORT`)
+  - Created `/app/logs` and `/app/data` directories
+- **Result**: Single optimized image without build tools
 
 #### config.py
 - Support for both `POSTGRES_*` and `DB_*` variables
@@ -117,15 +127,18 @@ This document summarizes all changes made to integrate sale-photosession-site wi
 
 ### Frontend Updates
 
-#### Dockerfile (Production)
-- Multi-stage build (builder + production)
-- Uses `serve` package for static files
-- Optimized image size
-- Creates logs directory
+#### Build Process
+- **No separate service**: Frontend built during Docker build (stage 1)
+- **Static files**: Copied to `/app/static` in backend container
+- **Volume mount**: `./static:/app/static:ro` makes files available to nginx
+- **No extra ports**: Static files served directly by nginx
 
-#### Dockerfile.dev (Development)
-- Separate dev build with hot reload
-- Direct vite dev server
+#### Nginx Configuration (setup-nginx.sh)
+- Root directory: `$BOT_DIR/static/` (mounted volume)
+- Serves static files with caching headers
+- Proxies `/api` to backend on localhost:PORT
+- WebSocket support for `/api/generation/ws`
+- Proper asset caching (1 year for static, no-cache for index.html)
 
 #### API Configuration
 - WebSocket URL derived from API URL
@@ -182,7 +195,10 @@ Complete troubleshooting reference:
 - ✅ Proper error handling
 
 ### Docker Optimization
-- ✅ Multi-stage builds for smaller images
+- ✅ Multi-stage builds for smaller images (Node.js → Python)
+- ✅ Single container reduces resource usage
+- ✅ No unnecessary services (no separate frontend container)
+- ✅ No extra ports for static files (nginx serves directly)
 - ✅ .dockerignore files for faster builds
 - ✅ Log rotation configured
 - ✅ Volume mounts for persistence
@@ -274,17 +290,24 @@ sudo docker-compose logs -f
 
 ## 📈 Performance Notes
 
+### Architecture
+- **Single container**: Reduced memory overhead
+- **No frontend service**: Eliminates unnecessary port and process
+- **Direct static serving**: Nginx serves files without proxy overhead
+- **Multi-stage build**: Smaller final image (no Node.js in runtime)
+
 ### Frontend
-- Production build uses optimized serve
-- Static files cached by nginx
-- API calls through platform nginx
+- Static files served directly by nginx with aggressive caching
+- API calls through platform nginx to localhost backend
 - WebSocket for real-time updates
+- Optimized production build with Vite
 
 ### Backend
 - Async/await throughout
 - Connection pooling (10 + 20 overflow)
 - Shared database with bot
 - Efficient ORM queries
+- Bound to localhost only (127.0.0.1)
 
 ### Database
 - Single PostgreSQL instance
@@ -310,13 +333,19 @@ sudo docker-compose logs -f
 
 All changes committed to branch: `claude/telegram-make-integration-gaRbf`
 
-1. `4904bdf` - Add telegram-bots-platform integration (1003 lines)
-2. `10d06be` - Fix platform deployment and add troubleshooting (495 lines)
-3. `6c000f7` - Fix TypeScript strict mode compilation errors (24 lines)
-4. `99c038f` - Fix AuthMethod type error and Pydantic v2 compatibility (11 lines)
-5. `1e0bafc` - Fix WebSocket URL and add database initialization (38 lines)
+1. Initial integration and fixes (5 commits, 1571 lines)
+   - Platform integration
+   - TypeScript strict mode fixes
+   - Pydantic v2 compatibility
+   - WebSocket URL fixes
+   - Database initialization
 
-**Total**: 5 commits, 1571 lines changed
+2. Security and architecture improvements
+   - Bind ports to localhost only (127.0.0.1)
+   - Add nginx configuration automation
+   - Remove unnecessary frontend service
+   - Implement single-container multi-stage build
+   - Optimize resource usage
 
 ---
 
