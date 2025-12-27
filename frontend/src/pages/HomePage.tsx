@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './HomePage.css';
 
 const HomePage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const compareContainerRef = useRef<HTMLDivElement>(null);
   const compareBeforeRef = useRef<HTMLDivElement>(null);
 
