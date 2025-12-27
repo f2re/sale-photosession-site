@@ -44,4 +44,4 @@ ENV PORT=8000
 
 # Entrypoint will copy static files to mounted volume, then start backend
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

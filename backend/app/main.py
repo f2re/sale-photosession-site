@@ -55,6 +55,16 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.get("/api")
+async def api_root():
+    """API root endpoint"""
+    return {
+        "status": "ok",
+        "message": "PhotoSession Website API",
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
