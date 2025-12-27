@@ -7,7 +7,8 @@ from .api import (
     users_router,
     packages_router,
     payments_router,
-    generation_router
+    generation_router,
+    websocket_router
 )
 from .database import engine
 from .database.crud import create_packages_from_config
@@ -45,6 +46,7 @@ app.include_router(users_router, prefix="/api")
 app.include_router(packages_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(generation_router, prefix="/api")
+app.include_router(websocket_router, prefix="/api")
 
 @app.get("/")
 async def root():

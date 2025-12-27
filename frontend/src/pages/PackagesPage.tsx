@@ -48,42 +48,72 @@ const PackagesPage: React.FC = () => {
 
   return (
     <div className="packages-page">
-      <h1>Выберите пакет</h1>
-      <p className="subtitle">Все пакеты включают 4 изображения на каждую фотосессию</p>
-
-      <div className="packages-grid">
-        {packages.map((pkg) => (
-          <div key={pkg.id} className={`package-card ${pkg.name === 'Бизнес' ? 'popular' : ''}`}>
-            {pkg.name === 'Бизнес' && <div className="popular-badge">🔥 Популярный</div>}
-
-            <h3>{pkg.name}</h3>
-            <div className="price">
-              <span className="amount">{pkg.price_rub}₽</span>
-              <span className="per-unit">
-                {Math.round(pkg.price_rub / pkg.photoshoots_count)}₽ за фотосессию
-              </span>
-            </div>
-
-            <div className="features">
-              <div className="feature">📸 {pkg.photoshoots_count} фотосессий</div>
-              <div className="feature">🖼️ {pkg.photoshoots_count * 4} изображений</div>
-              <div className="feature">✓ AI генерация</div>
-              <div className="feature">✓ Любые стили</div>
-            </div>
-
-            <button onClick={() => handlePurchase(pkg)} className="buy-btn">
-              Купить
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {!isAuthenticated && (
-        <div className="auth-reminder">
-          <p>Войдите, чтобы купить пакет</p>
-          <button onClick={() => navigate('/auth')}>Войти</button>
+      <section id="pricing" className="pricing-section">
+        <div className="pricing-header">
+          <h2>Пакеты фотосессий</h2>
+          <p className="pricing-subtitle">Выбирайте объем, который нужен вашему бизнесу. Гибкая система оплаты через YooKassa.</p>
         </div>
-      )}
+
+        <div className="pricing-grid">
+          {packages.map((pkg, index) => {
+            const isPopular = pkg.name === 'Бизнес' || index === 1;
+            const tierNames = ['Старт', 'Бизнес', 'Agency'];
+            const tierName = tierNames[index] || pkg.name;
+
+            return (
+              <div
+                key={pkg.id}
+                className={`pricing-card glass-card ${isPopular ? 'popular' : ''}`}
+                style={isPopular ? {
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  transform: 'scale(1.05)',
+                  background: 'rgba(255,255,255,0.05)'
+                } : {}}
+              >
+                {isPopular && (
+                  <div className="popular-badge">Popular</div>
+                )}
+
+                <div className="card-icon">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                </div>
+
+                <h3 className="package-name">{tierName}</h3>
+                <div className="package-price">{pkg.price_rub} ₽</div>
+
+                <ul className="package-features">
+                  <li>✓ {pkg.photoshoots_count} фотосессий</li>
+                  <li>✓ {pkg.photoshoots_count * 4} сгенерированных фото</li>
+                  <li>✓ Все стили доступны</li>
+                  <li>✓ Поддержка 24/7</li>
+                  {isPopular && <li>✓ Приоритетная генерация</li>}
+                  {index === 2 && <li>✓ API доступ</li>}
+                </ul>
+
+                <button
+                  onClick={() => handlePurchase(pkg)}
+                  className={isPopular ? 'package-btn popular' : 'package-btn'}
+                  style={isPopular ? {
+                    background: 'var(--pigment-primary)',
+                    color: 'white'
+                  } : {}}
+                >
+                  {isPopular ? 'Купить сейчас' : 'Выбрать'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {!isAuthenticated && (
+          <div className="auth-reminder">
+            <p>Войдите, чтобы купить пакет</p>
+            <button onClick={() => navigate('/auth')} className="btn-molten">Войти</button>
+          </div>
+        )}
+      </section>
     </div>
   );
 };
