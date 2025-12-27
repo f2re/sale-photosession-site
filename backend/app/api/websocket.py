@@ -1,10 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import Dict, Set
 import json
 import logging
-from ..middleware.auth import get_current_user_ws
-from ..database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -63,6 +60,8 @@ async def websocket_endpoint(
     # Accept connection first
     await websocket.accept()
 
+    user_id = None  # Initialize to avoid NameError in finally block
+
     try:
         # Authenticate user from token
         if not token:
@@ -75,15 +74,27 @@ async def websocket_endpoint(
 
         # Get user from token
         try:
-            from ..middleware.auth import get_current_user_from_token
+            from ..utils.jwt_handler import decode_access_token
+            from ..database.crud import get_user_by_id
             from ..database.session import async_session
 
+            # Decode the token
+            token_data = decode_access_token(token)
+            if not token_data:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "Invalid authentication token"
+                })
+                await websocket.close()
+                return
+
+            # Get user from database
             async with async_session() as db:
-                user = await get_current_user_from_token(token, db)
+                user = await get_user_by_id(db, token_data.user_id)
                 if not user:
                     await websocket.send_json({
                         "type": "error",
-                        "message": "Invalid authentication token"
+                        "message": "User not found"
                     })
                     await websocket.close()
                     return
