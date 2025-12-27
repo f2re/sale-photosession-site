@@ -34,7 +34,7 @@ BOT_DIR=$(pwd)
 
 echo -e "${GREEN}Using configuration:${NC}"
 echo "  Backend: 127.0.0.1:$BACKEND_PORT"
-echo "  Frontend static files: $BOT_DIR/frontend-dist/"
+echo "  Frontend static files: $BOT_DIR/static/"
 echo ""
 
 # Create nginx configuration
@@ -51,8 +51,8 @@ server {
     listen 80;
     server_name $DOMAIN;
 
-    # Root directory for static files
-    root $BOT_DIR/frontend-dist;
+    # Root directory for static files (mounted from Docker container)
+    root $BOT_DIR/static;
     index index.html;
 
     # Security headers
@@ -180,11 +180,11 @@ echo "Your site should now be accessible at:"
 echo -e "${GREEN}http://$DOMAIN${NC}"
 echo ""
 echo "Next steps:"
-echo "1. Build frontend: ${YELLOW}cd /opt/telegram-bots-platform/bots/photosession-site && sudo bash app/build-frontend.sh${NC}"
-echo "2. Setup SSL with: ${YELLOW}sudo certbot --nginx -d $DOMAIN${NC}"
-echo "3. Test frontend: ${YELLOW}curl http://$DOMAIN${NC}"
-echo "4. Test backend API: ${YELLOW}curl http://$DOMAIN/api${NC}"
-echo "5. View API docs: ${YELLOW}http://$DOMAIN/docs${NC}"
+echo "1. Rebuild container (builds frontend): ${YELLOW}cd /opt/telegram-bots-platform/bots/photosession-site && sudo docker-compose build --no-cache${NC}"
+echo "2. Start services: ${YELLOW}sudo docker-compose up -d${NC}"
+echo "3. Setup SSL: ${YELLOW}sudo certbot --nginx -d $DOMAIN${NC}"
+echo "4. Test frontend: ${YELLOW}curl http://$DOMAIN${NC}"
+echo "5. Test backend API: ${YELLOW}curl http://$DOMAIN/api${NC}"
 echo ""
 echo "Logs:"
 echo "  Access: /var/log/nginx/sale-photosession-site-access.log"

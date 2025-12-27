@@ -1,14 +1,15 @@
 version: '3.8'
 
-# This docker-compose.yml works with telegram-bots-platform
-# The platform clones the repo to ./app/, so build contexts reference ./app/backend and ./app/frontend
-# If running locally from repository root, use docker-compose.dev.yml instead
+# Production docker-compose for telegram-bots-platform
+# Single container with backend + frontend static files
+# Frontend is built during Docker build (multi-stage)
+# Static files mounted via volume for nginx to serve
 
 services:
   bot:
     build:
-      context: ./app/backend
-      dockerfile: Dockerfile
+      context: ./app
+      dockerfile: backend/Dockerfile
     container_name: ${BOT_NAME:-photosession-site}_bot
     ports:
       # Bind to localhost only - not exposed to internet
@@ -22,24 +23,13 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
+      # Static files for nginx to serve directly
+      - ./static:/app/static:ro
     logging:
       driver: "json-file"
       options:
         max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
         max-file: "${DOCKER_LOG_MAX_FILE:-3}"
-
-  # Frontend build container - just builds static files, then exits
-  frontend-builder:
-    build:
-      context: ./app/frontend
-      dockerfile: Dockerfile
-    container_name: ${BOT_NAME:-photosession-site}_frontend_builder
-    volumes:
-      # Output built files to ./frontend-dist for nginx to serve
-      - ./frontend-dist:/app/dist
-    command: echo "Frontend built successfully"
-    profiles:
-      - build
 
 networks:
   bots_shared_network:
