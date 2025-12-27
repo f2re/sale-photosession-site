@@ -24,7 +24,8 @@ services:
       - ./logs:/app/logs
       - ./data:/app/data
       # Static files for nginx to serve directly
-      - ./static:/app/static:ro
+      # Container copies built files here on startup
+      - ./static:/app/static
     logging:
       driver: "json-file"
       options:
