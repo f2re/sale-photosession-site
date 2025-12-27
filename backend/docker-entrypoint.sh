@@ -10,10 +10,10 @@ else
     echo "✅ Static files already present"
 fi
 
-# Replace PORT in CMD if BACKEND_PORT is set
-if [ -n "$BACKEND_PORT" ]; then
-    export PORT=$BACKEND_PORT
-fi
+# Use BACKEND_PORT if set, otherwise use PORT or default to 8000
+export PORT=${BACKEND_PORT:-${PORT:-8000}}
 
-# Execute CMD with proper port
-exec "$@" --port "${PORT:-8000}"
+echo "🚀 Starting uvicorn on port ${PORT}..."
+
+# Execute CMD - uvicorn will use $PORT environment variable via --port ${PORT}
+exec "$@"
