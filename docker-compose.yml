@@ -28,28 +28,18 @@ services:
         max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
         max-file: "${DOCKER_LOG_MAX_FILE:-3}"
 
-  frontend:
+  # Frontend build container - just builds static files, then exits
+  frontend-builder:
     build:
       context: ./app/frontend
       dockerfile: Dockerfile
-    container_name: ${BOT_NAME:-photosession-site}_frontend
-    ports:
-      # Bind to localhost only - not exposed to internet
-      # Only nginx can access this port
-      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
-    environment:
-      - VITE_API_URL=${API_URL}
-      - VITE_SITE_URL=${SITE_URL}
-    restart: unless-stopped
-    networks:
-      - bots_shared_network
+    container_name: ${BOT_NAME:-photosession-site}_frontend_builder
     volumes:
-      - ./logs:/app/logs
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
-        max-file: "${DOCKER_LOG_MAX_FILE:-3}"
+      # Output built files to ./frontend-dist for nginx to serve
+      - ./frontend-dist:/app/dist
+    command: echo "Frontend built successfully"
+    profiles:
+      - build
 
 networks:
   bots_shared_network:

@@ -12,22 +12,5 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Production stage
-FROM node:22-alpine
-
-WORKDIR /app
-
-# Install serve for static file serving
-RUN npm install -g serve
-
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
-
-# Create logs directory
-RUN mkdir -p /app/logs
-
-EXPOSE 3000
-
-# Serve static files
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Output: /app/dist contains static files
+# These will be mounted as a volume and served directly by nginx

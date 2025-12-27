@@ -30,11 +30,11 @@ fi
 
 # Get backend port from .env or use default
 BACKEND_PORT=$(grep "^BACKEND_PORT=" .env 2>/dev/null | cut -d'=' -f2 || echo "8000")
-FRONTEND_PORT=$(grep "^FRONTEND_PORT=" .env 2>/dev/null | cut -d'=' -f2 || echo "3000")
+BOT_DIR=$(pwd)
 
-echo -e "${GREEN}Using ports:${NC}"
+echo -e "${GREEN}Using configuration:${NC}"
 echo "  Backend: 127.0.0.1:$BACKEND_PORT"
-echo "  Frontend: 127.0.0.1:$FRONTEND_PORT"
+echo "  Frontend static files: $BOT_DIR/frontend-dist/"
 echo ""
 
 # Create nginx configuration
@@ -47,13 +47,13 @@ upstream backend {
     server 127.0.0.1:$BACKEND_PORT;
 }
 
-upstream frontend {
-    server 127.0.0.1:$FRONTEND_PORT;
-}
-
 server {
     listen 80;
     server_name $DOMAIN;
+
+    # Root directory for static files
+    root $BOT_DIR/frontend-dist;
+    index index.html;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -64,18 +64,10 @@ server {
     # Max upload size for image generation
     client_max_body_size 10M;
 
-    # Frontend - serve React app
-    location / {
-        proxy_pass http://frontend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-    }
+    # Gzip compression for static files
+    gzip on;
+    gzip_vary on;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss;
 
     # Backend API endpoints
     location /api {
@@ -131,6 +123,22 @@ server {
         proxy_send_timeout 86400;
     }
 
+    # Frontend - serve static files with proper caching
+    location / {
+        try_files \$uri \$uri/ /index.html;
+
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # Don't cache index.html
+        location = /index.html {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+        }
+    }
+
     # Deny hidden files
     location ~ /\. {
         deny all;
@@ -172,10 +180,11 @@ echo "Your site should now be accessible at:"
 echo -e "${GREEN}http://$DOMAIN${NC}"
 echo ""
 echo "Next steps:"
-echo "1. Setup SSL with: ${YELLOW}sudo certbot --nginx -d $DOMAIN${NC}"
-echo "2. Test frontend: ${YELLOW}curl http://$DOMAIN${NC}"
-echo "3. Test backend API: ${YELLOW}curl http://$DOMAIN/api${NC}"
-echo "4. View API docs: ${YELLOW}http://$DOMAIN/docs${NC}"
+echo "1. Build frontend: ${YELLOW}cd /opt/telegram-bots-platform/bots/photosession-site && sudo bash app/build-frontend.sh${NC}"
+echo "2. Setup SSL with: ${YELLOW}sudo certbot --nginx -d $DOMAIN${NC}"
+echo "3. Test frontend: ${YELLOW}curl http://$DOMAIN${NC}"
+echo "4. Test backend API: ${YELLOW}curl http://$DOMAIN/api${NC}"
+echo "5. View API docs: ${YELLOW}http://$DOMAIN/docs${NC}"
 echo ""
 echo "Logs:"
 echo "  Access: /var/log/nginx/sale-photosession-site-access.log"
