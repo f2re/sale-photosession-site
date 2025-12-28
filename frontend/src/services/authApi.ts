@@ -10,12 +10,26 @@ export const authApi = {
 
   // Code Auth
   requestCode: async (username: string): Promise<{ message: string; expires_in_minutes: number }> => {
-    const response = await api.post('/auth/request-code', { username });
+    console.log('authApi.requestCode called with username:', username);
+    const requestData = { username: username };
+    console.log('Sending request data:', JSON.stringify(requestData));
+    const response = await api.post('/auth/request-code', requestData, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Response received:', response);
     return response.data;
   },
 
   verifyCode: async (username: string, code: string): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/verify-code', { username, code });
+    console.log('authApi.verifyCode called with:', { username, code });
+    const requestData = { username, code };
+    const response = await api.post<AuthResponse>('/auth/verify-code', requestData, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
     return response.data;
   },
 
