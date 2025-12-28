@@ -23,7 +23,8 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir 'uvicorn[standard]' websockets
 
 # Copy backend application code
 COPY backend/ .
