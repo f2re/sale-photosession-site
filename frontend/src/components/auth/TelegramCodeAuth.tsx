@@ -30,12 +30,34 @@ const TelegramCodeAuth: React.FC<Props> = ({ onSuccess }) => {
     setError('');
     setLoading(true);
 
+    // Validate username
+    if (!username || username.trim().length === 0) {
+      setError('Введите ваш Telegram username');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await authApi.requestCode(username);
+      await authApi.requestCode(username.trim());
       setStep('code');
       setCountdown(300); // 5 minutes
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Ошибка отправки кода');
+      console.error('Request code error:', err);
+      // Handle different error formats
+      let errorMessage = 'Ошибка отправки кода';
+
+      if (err.response?.data?.detail) {
+        // FastAPI detail can be a string or an array
+        if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail;
+        } else if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map((e: any) => e.msg).join(', ');
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,10 +69,25 @@ const TelegramCodeAuth: React.FC<Props> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await authApi.verifyCode(username, code);
+      const response = await authApi.verifyCode(username.trim(), code.trim());
       onSuccess(response.access_token, response.user);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Неверный код');
+      console.error('Verify code error:', err);
+      // Handle different error formats
+      let errorMessage = 'Неверный код';
+
+      if (err.response?.data?.detail) {
+        // FastAPI detail can be a string or an array
+        if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail;
+        } else if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map((e: any) => e.msg).join(', ');
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
