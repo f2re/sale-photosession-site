@@ -2,6 +2,9 @@
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
 
+# Build argument to bust cache
+ARG CACHEBUST=unknown
+
 WORKDIR /frontend
 
 # Copy frontend package files
@@ -13,7 +16,10 @@ RUN npm ci
 # Copy frontend source
 COPY frontend/ ./
 
-# Build production bundle
+# Add CACHEBUST to bust cache for build step
+RUN echo "Cache bust: ${CACHEBUST}"
+
+# Build production bundle (always rebuild)
 RUN npm run build
 
 # Stage 2: Backend + Static files
@@ -29,7 +35,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
 # Copy built frontend to temporary location
-# (will be copied to /app/static on container startup)
 COPY --from=frontend-builder /frontend/dist /app/static-built
 
 # Create directories for logs, data, and static mount point
